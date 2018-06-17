@@ -10,17 +10,19 @@ import (
 
 // Defines constants for Type of contract.
 const (
-	requires = iota
+	requires exType = iota
 	ensures
 	assert
 	fail
+	invariant
 )
 
 const (
-	requiresMsg = "Pre-condition violated. Invalid implementation of calling code given method pre-condition [%s]."
-	ensuresMsg  = "Post-condition violated. Invalid implementation of method given post-condition [%s]."
-	assertMsg   = "Assertion violated. Invalid assumption about state of computation given assert condition [%s]."
-	failMsg     = "Fail condition triggered. Invalid program path executed with failed condition [%s]. "
+	requiresMsg  = "Pre-condition violated. Invalid implementation of calling code given method pre-condition [%s]."
+	ensuresMsg   = "Post-condition violated. Invalid implementation of method given post-condition [%s]."
+	assertMsg    = "Assertion violated. Invalid assumption about state of computation given assert condition [%s]."
+	failMsg      = "Fail condition triggered. Invalid program path executed with failed condition [%s]. "
+	invariantMsg = "Invariant violated. Invalid state given invariant [%s]."
 )
 
 //
@@ -63,7 +65,7 @@ func Requires(condition bool, msg string) {
 
 // Ensures defines a benefit that a method or function that is being called guarantees. It
 // establishes condition that is true upon exit that a client code can benefit from. Condition being
-// false upon method or function exit indicates a bug in the implementation of the method or
+// false upon method, or function exit, indicates a bug in the implementation of the method or
 // function.
 func Ensures(condition bool, msg string) {
 	if !condition {
@@ -86,6 +88,15 @@ func Assert(condition bool, msg string) {
 // needs to be revised.
 func Fail(msg string) {
 	panic(create(fail, fmt.Sprintf(failMsg, msg)))
+}
+
+// Invariant defines an invariant i.e. a condition that is true before every call to a public
+// function or method and which is also true after every call to a public function or method
+// completes. The invariant is most often check against state which is contained in Go using structs.
+func Invariant(condition bool, msg string) {
+	if !condition {
+		panic(create(invariant, fmt.Sprintf(invariantMsg, msg)))
+	}
 }
 
 //
@@ -118,4 +129,10 @@ func (ex Exception) IsAssert() bool {
 // false otherwise.
 func (ex Exception) IsFail() bool {
 	return ex.failed == fail
+}
+
+// IsInvariant returns true when exception was raised because of Invariant contract failure, returns
+// false otherwise.
+func (ex Exception) IsInvariant() bool {
+	return ex.failed == invariant
 }
